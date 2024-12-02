@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>抽籤系統</title>
+    <style>
+        body {
+            font-family: "Microsoft JhengHei", sans-serif;
+            margin: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            background: #f0f0f0;
+        }
+
+        #app {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            text-align: center;
+            position: relative;
+            width: 80%;
+            max-width: 600px;
+        }
+
+        #inputArea {
+            margin: 20px 0;
+        }
+
+        #itemList {
+            margin: 20px 0;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            min-height: 100px;
+        }
+
+        button {
+            background: #4CAF50;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 5px;
+        }
+
+        button:hover {
+            background: #45a049;
+        }
+
+        button:disabled {
+            background: #cccccc;
+            cursor: not-allowed;
+        }
+
+        input {
+            padding: 8px;
+            margin-right: 10px;
+            width: 200px;
+        }
+
+        .item {
+            margin: 5px;
+            padding: 5px;
+            background: #f8f8f8;
+            border-radius: 3px;
+            display: inline-block;
+        }
+
+        #result {
+            margin: 20px 0;
+            font-size: 1.2em;
+            font-weight: bold;
+            color: #2196F3;
+            min-height: 30px;
+        }
+
+        #authorInfo {
+            position: absolute;
+            bottom: -30px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 14px;
+            color: #666;
+        }
+
+        #soundControl {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+    <div id="app">
+        <h1>抽籤系統</h1>
+        
+        <div id="soundControl">
+            <label>
+                <input type="checkbox" id="soundToggle" checked>
+                開啟音效
+            </label>
+        </div>
+
+        <div id="inputArea">
+            <input type="text" id="newItem" placeholder="輸入選項">
+            <button onclick="addItem()">添加選項</button>
+        </div>
+
+        <div id="itemList"></div>
+        
+        <button id="drawButton" onclick="draw()">抽籤</button>
+        <button onclick="clearAll()">清空所有</button>
+        
+        <div id="result">等待抽籤...</div>
+        
+        <div id="authorInfo">413730994 陳佳堉</div>
+    </div>
+
+    <script>
+        let items = [];
+        const drawButton = document.getElementById('drawButton');
+        
+        // 音效設置
+        const sounds = {
+            click: new Audio('https://assets.mixkit.co/active_storage/sfx/2571/2571-preview.mp3'),
+            drawing: new Audio('https://assets.mixkit.co/active_storage/sfx/2005/2005-preview.mp3'),
+            result: new Audio('https://assets.mixkit.co/active_storage/sfx/1435/1435-preview.mp3')
+        };
+
+        // 播放音效
+        function playSound(soundName) {
+            const soundToggle = document.getElementById('soundToggle');
+            if (soundToggle.checked && sounds[soundName]) {
+                sounds[soundName].currentTime = 0;
+                sounds[soundName].play().catch(error => console.log('音效播放失敗'));
+            }
+        }
+
+        // 添加選項
+        function addItem() {
+            const input = document.getElementById('newItem');
+            const value = input.value.trim();
+            
+            if (value) {
+                playSound('click');
+                items.push(value);
+                input.value = '';
+                updateItemList();
+            }
+        }
+
+        // 更新選項列表
+        function updateItemList() {
+            const itemList = document.getElementById('itemList');
+            itemList.innerHTML = items.map(item => 
+                `<span class="item">${item}</span>`
+            ).join('');
+        }
+
+        // 抽籤
+        function draw() {
+            if (items.length === 0) {
+                alert('請先添加選項！');
+                return;
+            }
+
+            const result = document.getElementById('result');
+            drawButton.disabled = true;
+            result.textContent = '抽籤中...';
+            
+            playSound('drawing');
+            
+            let count = 0;
+            const interval = setInterval(() => {
+                result.textContent = items[count % items.length];
+                count++;
+            }, 100);
+
+            setTimeout(() => {
+                clearInterval(interval);
+                const randomIndex = Math.floor(Math.random() * items.length);
+                result.textContent = `抽中：${items[randomIndex]}`;
+                drawButton.disabled = false;
+                playSound('result');
+            }, 3000);
+        }
+
+        // 清空所有
+        function clearAll() {
+            playSound('click');
+            items = [];
+            updateItemList();
+            document.getElementById('result').textContent = '等待抽籤...';
+        }
+
+        // Enter鍵添加選項
+        document.getElementById('newItem').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                addItem();
+            }
+        });
+
+        // 預加載音效
+        window.onload = function() {
+            for (let sound in sounds) {
+                sounds[sound].load();
+            }
+        };
+    </script>
+</body>
+</html> 
